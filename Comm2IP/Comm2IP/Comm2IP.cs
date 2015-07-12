@@ -11,7 +11,9 @@ namespace Comm2IP
 {
 	public class Comm2IP
 	{
-		public static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+		static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
+		static Dictionary<string, SerialPort> ports = new Dictionary<string, SerialPort>();
 
 		byte[] localHost;
 		int port;
@@ -37,8 +39,8 @@ namespace Comm2IP
 			{
 				try
 				{
-					Socket socket = tcpListener.AcceptSocket();
-					SocketManager m = new SocketManager(socket, comPort, baudRate);
+					System.Net.Sockets.Socket socket = tcpListener.AcceptSocket();
+					Socket m = new Socket(socket, comPort, baudRate);
 					log.Info("Got connection from: " + socket.RemoteEndPoint + " for: " + comPort + "@" + baudRate);
 					Thread t = new Thread(new ThreadStart(m.Run));
 					t.Start();
@@ -59,6 +61,30 @@ namespace Comm2IP
 		{
 			shouldListen = false;
 			tcpListener.Stop();
+		}
+
+		public static SerialPort GetSerialPort(System.Net.Sockets.Socket socket, string portName, int baudRate)
+		{
+			SerialPort sp = null;
+			string key = portName.ToUpper();
+			try
+			{
+				sp = ports[key];
+				if (sp.InUse()) throw new Exception("Port is already in use!");
+				sp.SetSocket(socket);
+			}
+			catch (KeyNotFoundException)
+			{
+				sp = new SerialPort(socket, portName, baudRate);
+				sp.OpenPort();
+				ports.Add(key, sp);
+			}
+			return sp;
+		}
+
+		public static void CloseSerialPort(SerialPort serialPort)
+		{
+			if (serialPort != null) serialPort.SetSocket(null);
 		}
 	}
 }
