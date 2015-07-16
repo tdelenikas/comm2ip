@@ -65,26 +65,32 @@ namespace Comm2IP
 
 		public static SerialPort GetSerialPort(System.Net.Sockets.Socket socket, string portName, int baudRate)
 		{
-			SerialPort sp = null;
-			string key = portName.ToUpper();
-			try
+			lock (ports)
 			{
-				sp = ports[key];
-				if (sp.InUse()) throw new Exception("Port is already in use!");
-				sp.SetSocket(socket);
+				SerialPort sp = null;
+				string key = portName.ToUpper();
+				try
+				{
+					sp = ports[key];
+					if (sp.InUse()) throw new Exception("Port is already in use!");
+					sp.SetSocket(socket);
+				}
+				catch (KeyNotFoundException)
+				{
+					sp = new SerialPort(socket, portName, baudRate);
+					sp.OpenPort();
+					ports.Add(key, sp);
+				}
+				return sp;
 			}
-			catch (KeyNotFoundException)
-			{
-				sp = new SerialPort(socket, portName, baudRate);
-				sp.OpenPort();
-				ports.Add(key, sp);
-			}
-			return sp;
 		}
 
 		public static void CloseSerialPort(SerialPort serialPort)
 		{
-			if (serialPort != null) serialPort.SetSocket(null);
+			lock (ports)
+			{
+				if (serialPort != null) serialPort.SetSocket(null);
+			}
 		}
 	}
 }

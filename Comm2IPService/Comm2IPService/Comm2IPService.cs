@@ -85,16 +85,15 @@ namespace Comm2IPService
 				else if (args[i] == "-c") sm.commPort = args[++i];
 				else if (args[i] == "-b") sm.commRate = Int32.Parse(args[++i]);
 			}
-			log.Info(String.Format("Registering listener: {0}.{1}.{2}.{3}:{4} for {5}@{6}", sm.ipAddress[0], sm.ipAddress[1], sm.ipAddress[2], sm.ipAddress[3], sm.ipPort, sm.commPort, sm.commRate));
 			return sm;
 		}
 
 		public bool CheckParameters(ServiceMapping sm)
 		{
-			if ((sm.commRate == -1) || (sm.commPort == "") || (sm.ipAddress[0] == 0) || (sm.ipPort == -1))
+			if ((sm.commRate == -1) || (sm.commPort == "") || (sm.ipPort == -1))
 			{
 				Console.WriteLine("Comm2IP command line / service interface.");
-				Console.WriteLine("Copyright (c) 2002-2013, http://smslib.org");
+				Console.WriteLine("Copyright (c) 2002-2015, http://smslib.org");
 				Console.WriteLine();
 				Console.WriteLine("Service Usage:");
 				Console.WriteLine("	Comm2IPService --install   : Install me as a Windows Service.");
@@ -107,7 +106,11 @@ namespace Comm2IPService
 				Console.WriteLine("	i.e. connect to COM1@19200 and map traffic to localhost:12000.");
 				return false;
 			}
-			return true;
+			else
+			{
+				log.Info(String.Format("Registering listener: {0}.{1}.{2}.{3}:{4} for {5}@{6}", sm.ipAddress[0], sm.ipAddress[1], sm.ipAddress[2], sm.ipAddress[3], sm.ipPort, sm.commPort, sm.commRate));
+				return true;
+			}
 		}
 
 		public static void Main(string[] args)
